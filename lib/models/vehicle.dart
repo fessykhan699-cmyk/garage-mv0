@@ -30,10 +30,8 @@ class Vehicle {
       'make': make,
       'model': model,
       'year': year,
-      'createdAt':
-          useIsoFormat ? createdAt.toIso8601String() : createdAt.millisecondsSinceEpoch,
-      'updatedAt':
-          useIsoFormat ? updatedAt.toIso8601String() : updatedAt.millisecondsSinceEpoch,
+      'createdAt': _serializeDateTime(createdAt, useIsoFormat),
+      'updatedAt': _serializeDateTime(updatedAt, useIsoFormat),
     };
   }
 
@@ -52,11 +50,14 @@ class Vehicle {
   }
 }
 
+dynamic _serializeDateTime(DateTime value, bool useIsoFormat) =>
+    useIsoFormat ? value.toIso8601String() : value.millisecondsSinceEpoch;
+
 DateTime _parseDateTime(dynamic value) {
   if (value is DateTime) return value;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is double) {
-    // Some serializers may emit fractional milliseconds; round to nearest ms.
+    // Some JSON serializers may emit fractional milliseconds; round to nearest ms.
     return DateTime.fromMillisecondsSinceEpoch(value.round());
   }
   if (value is String) return DateTime.parse(value);
