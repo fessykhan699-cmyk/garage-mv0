@@ -21,13 +21,23 @@ class LineItem {
   }
 
   factory LineItem.fromMap(Map<String, dynamic> map) {
+    final name = map['name'];
+    if (name is! String) {
+      throw ArgumentError('Required field name must be a String');
+    }
     return LineItem(
-      name: map['name'] as String,
-      qty: _parseNum(map['qty']),
-      rate: _parseNum(map['rate']),
-      total: _parseNum(map['total']),
+      name: name,
+      qty: _parseNum(_requireValue(map, 'qty')),
+      rate: _parseNum(_requireValue(map, 'rate')),
+      total: _parseNum(_requireValue(map, 'total')),
     );
   }
+}
+
+dynamic _requireValue(Map<String, dynamic> map, String key) {
+  final value = map[key];
+  if (value != null) return value;
+  throw ArgumentError('Missing required field: $key');
 }
 
 num _parseNum(dynamic value) {

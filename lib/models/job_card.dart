@@ -55,18 +55,18 @@ class JobCard {
 
   factory JobCard.fromMap(Map<String, dynamic> map) {
     return JobCard(
-      id: map['id'] as String,
-      garageId: map['garageId'] as String,
-      customerId: map['customerId'] as String,
-      vehicleId: map['vehicleId'] as String,
-      jobCardNumber: map['jobCardNumber'] as String,
-      complaint: map['complaint'] as String,
+      id: _requireString(map, 'id'),
+      garageId: _requireString(map, 'garageId'),
+      customerId: _requireString(map, 'customerId'),
+      vehicleId: _requireString(map, 'vehicleId'),
+      jobCardNumber: _requireString(map, 'jobCardNumber'),
+      complaint: _requireString(map, 'complaint'),
       notes: map['notes'] as String?,
       beforePhotoPaths: _parseStringList(map['beforePhotoPaths']),
       afterPhotoPaths: _parseStringList(map['afterPhotoPaths']),
-      status: _parseJobCardStatus(map['status']),
-      createdAt: _parseDateTime(map['createdAt']),
-      updatedAt: _parseDateTime(map['updatedAt']),
+      status: _parseJobCardStatus(_requireValue(map, 'status')),
+      createdAt: _parseDateTime(_requireValue(map, 'createdAt')),
+      updatedAt: _parseDateTime(_requireValue(map, 'updatedAt')),
     );
   }
 }
@@ -108,9 +108,33 @@ JobCardStatus _parseJobCardStatus(dynamic value) {
 List<String> _parseStringList(dynamic value) {
   if (value == null) return const [];
   if (value is List) {
-    return value.where((e) => e != null).map((e) => e.toString()).toList();
+    final result = <String>[];
+    for (final element in value) {
+      if (element is! String) {
+        throw ArgumentError(
+          'List elements must be strings. Found ${element.runtimeType}: $element',
+        );
+      }
+      result.add(element);
+    }
+    return List<String>.unmodifiable(result);
   }
   throw ArgumentError('Invalid list value: $value');
+}
+
+String _requireString(Map<String, dynamic> map, String key) {
+  final value = map[key];
+  if (value is String) return value;
+  if (value == null) {
+    throw ArgumentError('Missing required field: $key');
+  }
+  throw ArgumentError('Required field $key must be a String');
+}
+
+dynamic _requireValue(Map<String, dynamic> map, String key) {
+  final value = map[key];
+  if (value != null) return value;
+  throw ArgumentError('Missing required field: $key');
 }
 
 dynamic _serializeDateTime(DateTime value, bool useIsoFormat) =>
@@ -120,7 +144,7 @@ DateTime _parseDateTime(dynamic value) {
   if (value is DateTime) return value;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
   if (value is double) {
-    return DateTime.fromMillisecondsSinceEpoch(value.round());
+    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
   }
   if (value is String) return DateTime.parse(value);
   throw ArgumentError('Invalid date value: $value');
