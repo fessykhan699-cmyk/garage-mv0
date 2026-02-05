@@ -1,5 +1,7 @@
 import 'line_item.dart';
 
+const num _defaultVatRate = 0.05;
+
 enum QuoteStatus {
   draft,
   sent,
@@ -91,7 +93,7 @@ class Quotation {
       laborItems: _parseLineItems(map['laborItems']),
       partItems: _parseLineItems(map['partItems']),
       vatEnabled: _parseBool(map['vatEnabled'] ?? false),
-      vatRate: _parseNum(map['vatRate'] ?? 0.05),
+      vatRate: _parseNum(map['vatRate'] ?? _defaultVatRate),
       subtotal: _parseNum(_requireValue(map, 'subtotal')),
       vatAmount: _parseNum(map['vatAmount'] ?? 0),
       total: _parseNum(_requireValue(map, 'total')),
