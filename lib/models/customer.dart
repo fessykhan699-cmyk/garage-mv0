@@ -11,12 +11,12 @@ class Customer {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({bool useIsoFormat = true}) {
     return {
       'id': id,
       'garageId': garageId,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': _serializeDateTime(createdAt, useIsoFormat),
+      'updatedAt': _serializeDateTime(updatedAt, useIsoFormat),
     };
   }
 
@@ -30,9 +30,16 @@ class Customer {
   }
 }
 
+dynamic _serializeDateTime(DateTime value, bool useIsoFormat) =>
+    useIsoFormat ? value.toIso8601String() : value.millisecondsSinceEpoch;
+
 DateTime _parseDateTime(dynamic value) {
   if (value is DateTime) return value;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is double) {
+    // Some JSON serializers may emit fractional milliseconds; round to nearest ms.
+    return DateTime.fromMillisecondsSinceEpoch(value.round());
+  }
   if (value is String) return DateTime.parse(value);
   throw ArgumentError('Invalid date value: $value');
 }
