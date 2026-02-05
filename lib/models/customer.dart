@@ -1,3 +1,4 @@
+/// Customer entity for a garage, with timestamp serialization helpers.
 class Customer {
   const Customer({
     required this.id,

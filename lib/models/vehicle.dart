@@ -1,3 +1,4 @@
+/// Vehicle linked to a customer and garage, with optional make/model/year.
 class Vehicle {
   const Vehicle({
     required this.id,
