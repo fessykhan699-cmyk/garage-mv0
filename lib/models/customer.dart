@@ -11,14 +11,14 @@ class Customer {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Map<String, dynamic> toMap({bool asIsoStrings = true}) {
+  Map<String, dynamic> toMap({bool useIsoFormat = true}) {
     return {
       'id': id,
       'garageId': garageId,
       'createdAt':
-          asIsoStrings ? createdAt.toIso8601String() : createdAt.millisecondsSinceEpoch,
+          useIsoFormat ? createdAt.toIso8601String() : createdAt.millisecondsSinceEpoch,
       'updatedAt':
-          asIsoStrings ? updatedAt.toIso8601String() : updatedAt.millisecondsSinceEpoch,
+          useIsoFormat ? updatedAt.toIso8601String() : updatedAt.millisecondsSinceEpoch,
     };
   }
 
