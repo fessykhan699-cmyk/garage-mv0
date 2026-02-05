@@ -55,7 +55,7 @@ class Vehicle {
 DateTime _parseDateTime(dynamic value) {
   if (value is DateTime) return value;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
-  if (value is double) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  if (value is double) return DateTime.fromMillisecondsSinceEpoch(value.round());
   if (value is String) return DateTime.parse(value);
   throw ArgumentError('Invalid date value: $value');
 }
