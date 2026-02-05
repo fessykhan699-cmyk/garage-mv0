@@ -11,7 +11,7 @@ class Customer {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Map<String, dynamic> toMap({bool asIsoStrings = false}) {
+  Map<String, dynamic> toMap({bool asIsoStrings = true}) {
     return {
       'id': id,
       'garageId': garageId,
