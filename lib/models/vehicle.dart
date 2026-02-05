@@ -21,7 +21,7 @@ class Vehicle {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({bool asIsoStrings = false}) {
     return {
       'id': id,
       'garageId': garageId,
@@ -30,8 +30,10 @@ class Vehicle {
       'make': make,
       'model': model,
       'year': year,
-      'createdAt': createdAt.millisecondsSinceEpoch,
-      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'createdAt':
+          asIsoStrings ? createdAt.toIso8601String() : createdAt.millisecondsSinceEpoch,
+      'updatedAt':
+          asIsoStrings ? updatedAt.toIso8601String() : updatedAt.millisecondsSinceEpoch,
     };
   }
 
@@ -53,6 +55,7 @@ class Vehicle {
 DateTime _parseDateTime(dynamic value) {
   if (value is DateTime) return value;
   if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
   if (value is String) return DateTime.parse(value);
   throw ArgumentError('Invalid date value: $value');
 }
