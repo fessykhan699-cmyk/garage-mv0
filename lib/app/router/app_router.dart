@@ -57,7 +57,7 @@ class AppRouter {
           ),
           GoRoute(
             path: ':id',
-            name: 'jobcardsDetail',
+            name: 'jobcardDetail',
             builder: (context, state) => _RoutePlaceholder(
               'Job Card ${state.pathParameters['id'] ?? ''}',
             ),
@@ -66,7 +66,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/quotations/:id',
-        name: 'quotations',
+        name: 'quotationDetail',
         builder: (context, state) => _RoutePlaceholder(
           'Quotation ${state.pathParameters['id'] ?? ''}',
         ),
