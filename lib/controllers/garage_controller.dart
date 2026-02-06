@@ -43,8 +43,9 @@ class GarageController extends AutoDisposeAsyncNotifier<Garage?> {
     _garageId = garage.id;
     state = const AsyncLoading();
     final repository = ref.read(garageRepositoryProvider);
-    final result =
-        await AsyncValue.guard(() => repository.createGarage(garage));
+    final result = await AsyncValue.guard<Garage?>(
+      () => repository.createGarage(garage),
+    );
     state = result;
   }
 
