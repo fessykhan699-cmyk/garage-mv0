@@ -20,6 +20,7 @@ class GarageController extends AutoDisposeAsyncNotifier<Garage?> {
   @override
   FutureOr<Garage?> build(String garageId) {
     _garageId = garageId;
+    state = const AsyncLoading();
     final repository = ref.watch(garageRepositoryProvider);
 
     _garageSubscription = repository.watchGarage(garageId).listen(
@@ -32,6 +33,14 @@ class GarageController extends AutoDisposeAsyncNotifier<Garage?> {
   }
 
   Future<void> createGarage(Garage garage) async {
+    if (garage.id != _garageId) {
+      throw ArgumentError.value(
+        garage.id,
+        'garage.id',
+        'Garage id must match controller id $_garageId',
+      );
+    }
+    _garageId = garage.id;
     state = const AsyncLoading();
     final repository = ref.read(garageRepositoryProvider);
     final result =
