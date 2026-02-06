@@ -1,13 +1,11 @@
-import 'dart:io' show Platform;
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:share_plus/share_plus.dart';
 
-class ShareUtils {
-  ShareUtils._();
+class ShareService {
+  ShareService._();
 
-  /// WhatsApp-friendly quotation message template.
-  static String quotationMessage({
+  static String quotationTemplate({
     required String customerName,
     required String vehiclePlate,
     required num total,
@@ -20,8 +18,7 @@ class ShareUtils {
         'PDF attached.';
   }
 
-  /// WhatsApp-friendly invoice message template.
-  static String invoiceMessage({
+  static String invoiceTemplate({
     required String customerName,
     required String vehiclePlate,
     required num total,
@@ -32,32 +29,22 @@ class ShareUtils {
         'PDF attached. Thank you.';
   }
 
-  /// Share PDF bytes with an optional message (e.g., WhatsApp).
-  static Future<void> sharePdfBytes({
-    required Uint8List bytes,
-    required String filename,
-    String? message,
-  }) {
-    final file = XFile.fromData(
-      bytes,
-      mimeType: 'application/pdf',
-      name: filename,
-    );
-    return Share.shareXFiles([file], text: message);
-  }
-
-  /// Share an existing PDF file path with an optional message.
-  static Future<void> sharePdfFile({
+  static Future<void> sharePdf({
     required String filePath,
     String? message,
-  }) {
-    final filename = filePath.split(Platform.pathSeparator).last;
+  }) async {
+    final filename = _basename(filePath);
     final file = XFile(
       filePath,
       mimeType: 'application/pdf',
       name: filename,
     );
-    return Share.shareXFiles([file], text: message);
+    await Share.shareXFiles([file], text: message);
+  }
+
+  static String _basename(String path) {
+    final segments = File(path).uri.pathSegments.where((s) => s.isNotEmpty);
+    return segments.isNotEmpty ? segments.last : path.split(Platform.pathSeparator).last;
   }
 
   static String _formatTotal(num total) =>
