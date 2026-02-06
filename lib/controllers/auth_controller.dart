@@ -35,7 +35,7 @@ class AuthController extends AutoDisposeAsyncNotifier<AuthUser?> {
   }) async {
     state = const AsyncLoading();
     final repository = ref.read(authRepositoryProvider);
-    final result = await AsyncValue.guard(
+    final result = await AsyncValue.guard<AuthUser?>(
       () => repository.signIn(email: email, password: password),
     );
     state = result;
@@ -47,7 +47,7 @@ class AuthController extends AutoDisposeAsyncNotifier<AuthUser?> {
   }) async {
     state = const AsyncLoading();
     final repository = ref.read(authRepositoryProvider);
-    final result = await AsyncValue.guard(
+    final result = await AsyncValue.guard<AuthUser?>(
       () => repository.signUp(email: email, password: password),
     );
     state = result;
@@ -56,7 +56,7 @@ class AuthController extends AutoDisposeAsyncNotifier<AuthUser?> {
   Future<void> signOut() async {
     state = const AsyncLoading();
     final repository = ref.read(authRepositoryProvider);
-    final result = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard<AuthUser?>(() async {
       await repository.signOut();
       return null;
     });
