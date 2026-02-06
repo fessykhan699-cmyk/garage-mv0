@@ -21,7 +21,19 @@ class JobCardsController {
   Future<JobCard> create(JobCard jobCard) async {
     await _enforceJobCardLimit(jobCard.garageId);
     final created = await _jobCardRepository.create(jobCard);
-    await _planGate.recordUsage(created.garageId, jobCardsCreated: 1);
+    try {
+      await _planGate.recordUsage(
+        created.garageId,
+        jobCardsCreated: 1,
+      );
+    } catch (error, stackTrace) {
+      try {
+        await _jobCardRepository.delete(created.id);
+      } catch (_) {
+        // Best-effort rollback; preserve the original error context.
+      }
+      Error.throwWithStackTrace(error, stackTrace);
+    }
     return created;
   }
 
@@ -42,9 +54,21 @@ class JobCardsController {
     final isPro = _planGate.canUseProFeatures(garage?.plan);
     if (isPro) return;
 
-    final createdCount = garage?.usage['jobCardsCreated'] ?? 0;
+    final usageCount = garage?.usage['jobCardsCreated'];
+    final createdCount = _parseUsageCount(usageCount);
     if (createdCount >= _freePlanJobCardLimit) {
-      throw StateError('Free plan limited to $_freePlanJobCardLimit job cards');
+      throw StateError(
+        'Free plan limit of $_freePlanJobCardLimit job cards reached. Upgrade to Pro to add more job cards.',
+      );
     }
+  }
+
+  int _parseUsageCount(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    throw StateError(
+      'Invalid usage count for job cards. Expected int, found ${value.runtimeType}. '
+      'Please retry or contact support if the issue persists.',
+    );
   }
 }

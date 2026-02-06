@@ -10,6 +10,8 @@ class QuotationController {
 
   final QuotationRepository _quotationRepository;
 
+  /// Creates a quotation. When [id] is null or empty, an empty ID is forwarded
+  /// so the repository can generate a new identifier according to its contract.
   Future<Quotation> create({
     required String garageId,
     required String jobCardId,
@@ -21,7 +23,7 @@ class QuotationController {
     bool vatEnabled = false,
     num? vatRate,
     QuoteStatus status = QuoteStatus.draft,
-    String id = '',
+    String? id,
     String? pdfPath,
     bool? pdfWatermarked,
     String? approvalTokenId,
@@ -30,9 +32,11 @@ class QuotationController {
     String? customerComment,
   }) async {
     final now = DateTime.now();
+    // This controller passes an empty ID when none is provided so that the repository can generate one.
+    final resolvedId = (id == null || id.isEmpty) ? '' : id;
     final normalized = _normalize(
       Quotation(
-        id: id,
+        id: resolvedId,
         garageId: garageId,
         jobCardId: jobCardId,
         customerId: customerId,
@@ -58,6 +62,7 @@ class QuotationController {
         createdAt: now,
         updatedAt: now,
       ),
+      updatedAt: now,
     );
 
     return _quotationRepository.create(normalized);
@@ -72,16 +77,47 @@ class QuotationController {
       _quotationRepository.watchByGarage(garageId);
 
   Future<void> update(Quotation quotation) async {
-    final normalized = _normalize(quotation);
+    final existing = await _quotationRepository.fetch(quotation.id);
+    final normalized = _normalize(
+      Quotation(
+        id: quotation.id,
+        garageId: quotation.garageId,
+        jobCardId: quotation.jobCardId,
+        customerId: quotation.customerId,
+        vehicleId: quotation.vehicleId,
+        quoteNumber: quotation.quoteNumber,
+        status: quotation.status,
+        laborItems: quotation.laborItems,
+        partItems: quotation.partItems,
+        vatEnabled: quotation.vatEnabled,
+        vatRate: quotation.vatRate,
+        subtotal: quotation.subtotal,
+        vatAmount: quotation.vatAmount,
+        total: quotation.total,
+        pdfPath: quotation.pdfPath,
+        pdfWatermarked: quotation.pdfWatermarked,
+        approvalTokenId: quotation.approvalTokenId,
+        approvedAt: quotation.approvedAt,
+        rejectedAt: quotation.rejectedAt,
+        customerComment: quotation.customerComment,
+        createdAt: existing?.createdAt ?? quotation.createdAt,
+      ),
+      updatedAt: DateTime.now(),
+    );
     await _quotationRepository.update(normalized);
   }
 
   Future<void> delete(String id) => _quotationRepository.delete(id);
 
-  Quotation _normalize(Quotation quotation) {
+  Quotation _normalize(
+    Quotation quotation, {
+    DateTime? updatedAt,
+  }) {
+    final laborItems = List<LineItem>.unmodifiable(quotation.laborItems);
+    final partItems = List<LineItem>.unmodifiable(quotation.partItems);
     final totals = QuoteCalculator.calculateTotals(
-      laborItems: quotation.laborItems,
-      partItems: quotation.partItems,
+      laborItems: laborItems,
+      partItems: partItems,
       vatEnabled: quotation.vatEnabled,
       vatRate: quotation.vatRate,
     );
@@ -93,8 +129,8 @@ class QuotationController {
       vehicleId: quotation.vehicleId,
       quoteNumber: quotation.quoteNumber,
       status: quotation.status,
-      laborItems: quotation.laborItems,
-      partItems: quotation.partItems,
+      laborItems: laborItems,
+      partItems: partItems,
       vatEnabled: quotation.vatEnabled,
       vatRate: QuoteCalculator.resolveVatRate(
         vatEnabled: quotation.vatEnabled,
@@ -110,7 +146,7 @@ class QuotationController {
       rejectedAt: quotation.rejectedAt,
       customerComment: quotation.customerComment,
       createdAt: quotation.createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: updatedAt ?? DateTime.now(),
     );
   }
 }
