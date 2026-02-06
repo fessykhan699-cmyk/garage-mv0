@@ -75,11 +75,12 @@ class ApprovalController {
     required ApprovalStatus status,
     String? customerComment,
   }) async {
+    final now = DateTime.now();
     final token = await _approvalRepository.fetch(tokenId);
     if (token == null) {
       throw StateError('Approval token not found: $tokenId');
     }
-    if (token.expiresAt != null && token.expiresAt!.isBefore(DateTime.now())) {
+    if (token.expiresAt != null && token.expiresAt!.isBefore(now)) {
       throw StateError('Approval token $tokenId has expired');
     }
     if (token.status != ApprovalStatus.pending) {
@@ -88,13 +89,12 @@ class ApprovalController {
       );
     }
 
-    final now = DateTime.now();
     final updatedToken = token.copyWith(
       status: status,
       customerComment: customerComment ?? token.customerComment,
-      decidedAt: token.decidedAt ?? now,
+      decidedAt: now,
       used: true,
-      usedAt: token.usedAt ?? now,
+      usedAt: now,
     );
     await _approvalRepository.update(updatedToken);
 
@@ -177,8 +177,8 @@ class ApprovalController {
       pdfPath: quotation.pdfPath,
       pdfWatermarked: quotation.pdfWatermarked,
       approvalTokenId: quotation.approvalTokenId ?? tokenId,
-      approvedAt: isApproved ? (quotation.approvedAt ?? now) : null,
-      rejectedAt: isApproved ? null : (quotation.rejectedAt ?? now),
+      approvedAt: isApproved ? now : null,
+      rejectedAt: isApproved ? null : now,
       customerComment: customerComment ?? quotation.customerComment,
       createdAt: quotation.createdAt,
       updatedAt: now,
