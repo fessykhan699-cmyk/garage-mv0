@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import '../models/vehicle.dart';
-import '../repositories/mock/mock_vehicle_repository.dart';
 import '../repositories/vehicle_repository.dart';
 
 class VehiclesController {
@@ -18,10 +17,7 @@ class VehiclesController {
   Future<void> delete(String id) => _repository.delete(id);
 
   Future<List<Vehicle>> listByGarage(String garageId, {String? plateQuery}) async {
-    final normalizedQuery = plateQuery?.trim();
-    if (normalizedQuery == null || normalizedQuery.isEmpty) {
-      return _repository.listByGarage(garageId);
-    }
+    final normalizedQuery = _normalizeQuery(plateQuery);
     return _searchByPlate(garageId, normalizedQuery);
   }
 
@@ -29,29 +25,19 @@ class VehiclesController {
     String customerId, {
     String? plateQuery,
   }) async {
-    final normalizedQuery = plateQuery?.trim();
-    if (normalizedQuery == null || normalizedQuery.isEmpty) {
+    final normalizedQuery = _normalizeQuery(plateQuery);
+    if (normalizedQuery.isEmpty) {
       return _repository.listByCustomer(customerId);
     }
     final vehicles = await _repository.listByCustomer(customerId);
-    final queryLower = normalizedQuery.toLowerCase();
-    return vehicles
-        .where(
-          (vehicle) => vehicle.plateNumber.toLowerCase().contains(queryLower),
-        )
-        .toList(growable: false);
+    return _filterByPlate(vehicles, normalizedQuery);
   }
 
   Stream<List<Vehicle>> watchByGarage(
     String garageId, {
     String? plateQuery,
   }) async* {
-    final normalizedQuery = plateQuery?.trim();
-    if (normalizedQuery == null || normalizedQuery.isEmpty) {
-      yield* _repository.watchByGarage(garageId);
-      return;
-    }
-
+    final normalizedQuery = _normalizeQuery(plateQuery);
     yield await _searchByPlate(garageId, normalizedQuery);
     yield* _repository
         .watchByGarage(garageId)
@@ -62,36 +48,42 @@ class VehiclesController {
     String customerId, {
     String? plateQuery,
   }) async* {
-    final normalizedQuery = plateQuery?.trim();
-    if (normalizedQuery == null || normalizedQuery.isEmpty) {
+    final normalizedQuery = _normalizeQuery(plateQuery);
+    if (normalizedQuery.isEmpty) {
       yield* _repository.watchByCustomer(customerId);
       return;
     }
 
-    final queryLower = normalizedQuery.toLowerCase();
-    yield await listByCustomer(customerId, plateQuery: normalizedQuery);
+    final initialVehicles = await _repository.listByCustomer(customerId);
+    yield _filterByPlate(initialVehicles, normalizedQuery);
     yield* _repository.watchByCustomer(customerId).asyncMap(
-          (vehicles) => vehicles
-              .where(
-                (vehicle) =>
-                    vehicle.plateNumber.toLowerCase().contains(queryLower),
-              )
-              .toList(growable: false),
+          (vehicles) => _filterByPlate(vehicles, normalizedQuery),
         );
   }
 
   Future<List<Vehicle>> _searchByPlate(String garageId, String query) async {
-    if (_repository is MockVehicleRepository) {
-      return (_repository as MockVehicleRepository)
-          .searchByPlate(garageId, query);
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isEmpty) {
+      return _repository.listByGarage(garageId);
     }
 
-    final normalizedQuery = query.toLowerCase();
+    // Repository interface does not expose server-side plate search; fall back to
+    // client-side filtering.
     final vehicles = await _repository.listByGarage(garageId);
+    return _filterByPlate(vehicles, trimmedQuery);
+  }
+
+  List<Vehicle> _filterByPlate(List<Vehicle> vehicles, String query) {
+    // Normalize here to keep callers simple; queries are trimmed by caller and
+    // lowercased here for case-insensitive matching.
+    final normalizedQuery = query.toLowerCase();
     return vehicles
         .where(
-          (vehicle) => vehicle.plateNumber.toLowerCase().contains(normalizedQuery),
+          (vehicle) =>
+              vehicle.plateNumber.toLowerCase().contains(normalizedQuery),
         )
         .toList(growable: false);
   }
+
+  String _normalizeQuery(String? query) => query?.trim() ?? '';
 }
