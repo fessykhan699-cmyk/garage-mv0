@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import '../../models/customer.dart';
 import '../../services/local_storage.dart';
 import '../customer_repository.dart';
+import 'counter_utils.dart';
 
 class MockCustomerRepository implements CustomerRepository {
   MockCustomerRepository({
@@ -103,9 +104,7 @@ class MockCustomerRepository implements CustomerRepository {
   }
 
   Future<String> _nextId(Box<Map<String, dynamic>> box) async {
-    final current = (box.get(_counterKey) as int?) ?? 0;
-    final next = current + 1;
-    await box.put(_counterKey, next);
+    final next = await nextCounterValue(box, _counterKey);
     return 'cust-$next';
   }
 

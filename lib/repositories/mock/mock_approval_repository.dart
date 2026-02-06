@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../services/local_storage.dart';
 import '../approval_repository.dart';
+import 'counter_utils.dart';
 
 class MockApprovalRepository implements ApprovalRepository {
   MockApprovalRepository({
@@ -101,9 +102,7 @@ class MockApprovalRepository implements ApprovalRepository {
   }
 
   Future<String> _nextId(Box<Map<String, dynamic>> box) async {
-    final current = (box.get(_counterKey) as int?) ?? 0;
-    final next = current + 1;
-    await box.put(_counterKey, next);
+    final next = await nextCounterValue(box, _counterKey);
     return 'approval-$next';
   }
 }

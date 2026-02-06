@@ -26,7 +26,8 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<AuthUser?> currentUser() async {
     final box = await _box;
-    final currentId = box.get(_currentUserKey) as String?;
+    final currentEntry = box.get(_currentUserKey);
+    final currentId = _extractCurrentUserId(currentEntry);
     if (currentId == null) return null;
     return _getUserById(box, currentId);
   }
@@ -46,7 +47,7 @@ class MockAuthRepository implements AuthRepository {
     final box = await _box;
     final existing = _findUserByEmail(box, email);
     if (existing != null) {
-      await box.put(_currentUserKey, existing.id);
+      await box.put(_currentUserKey, {'id': existing.id});
       return existing;
     }
     return _createUser(box, email);
@@ -88,7 +89,7 @@ class MockAuthRepository implements AuthRepository {
       updatedAt: now,
     );
     await box.put(user.id, user.toMap());
-    await box.put(_currentUserKey, user.id);
+    await box.put(_currentUserKey, {'id': user.id});
     return user;
   }
 
@@ -115,5 +116,11 @@ class MockAuthRepository implements AuthRepository {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final salt = _random.nextInt(0xFFFFFF);
     return '$prefix-$timestamp-$salt';
+  }
+
+  String? _extractCurrentUserId(dynamic entry) {
+    if (entry is Map<String, dynamic>) return entry['id'] as String?;
+    if (entry is String) return entry;
+    return null;
   }
 }

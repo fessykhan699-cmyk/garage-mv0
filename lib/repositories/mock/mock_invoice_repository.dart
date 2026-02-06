@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../models/invoice.dart';
 import '../../services/local_storage.dart';
 import '../invoice_repository.dart';
+import 'counter_utils.dart';
 
 class MockInvoiceRepository implements InvoiceRepository {
   MockInvoiceRepository({
@@ -124,9 +125,7 @@ class MockInvoiceRepository implements InvoiceRepository {
   }
 
   Future<String> _nextId(Box<Map<String, dynamic>> box) async {
-    final current = (box.get(_counterKey) as int?) ?? 0;
-    final next = current + 1;
-    await box.put(_counterKey, next);
+    final next = await nextCounterValue(box, _counterKey);
     return 'inv-$next';
   }
 }
