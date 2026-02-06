@@ -9,6 +9,7 @@ import '../../services/quote_calculator.dart';
 import '../garage_repository.dart';
 import '../quotation_repository.dart';
 import 'mock_garage_repository.dart';
+import 'counter_utils.dart';
 
 class MockQuotationRepository implements QuotationRepository {
   MockQuotationRepository({
@@ -187,9 +188,7 @@ class MockQuotationRepository implements QuotationRepository {
   }
 
   Future<String> _nextId(Box<Map<String, dynamic>> box) async {
-    final current = (box.get(_counterKey) as int?) ?? 0;
-    final next = current + 1;
-    await box.put(_counterKey, next);
+    final next = await nextCounterValue(box, _counterKey);
     return 'quote-$next';
   }
 }

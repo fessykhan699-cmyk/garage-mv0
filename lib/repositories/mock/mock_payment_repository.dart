@@ -8,6 +8,7 @@ import '../../services/local_storage.dart';
 import '../invoice_repository.dart';
 import '../payment_repository.dart';
 import 'mock_invoice_repository.dart';
+import 'counter_utils.dart';
 
 class MockPaymentRepository implements PaymentRepository {
   MockPaymentRepository({
@@ -119,9 +120,7 @@ class MockPaymentRepository implements PaymentRepository {
   }
 
   Future<String> _nextId(Box<Map<String, dynamic>> box) async {
-    final current = (box.get(_counterKey) as int?) ?? 0;
-    final next = current + 1;
-    await box.put(_counterKey, next);
+    final next = await nextCounterValue(box, _counterKey);
     return 'pay-$next';
   }
 }

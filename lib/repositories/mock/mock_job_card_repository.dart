@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../models/job_card.dart';
 import '../../services/local_storage.dart';
 import '../job_card_repository.dart';
+import 'counter_utils.dart';
 
 class MockJobCardRepository implements JobCardRepository {
   MockJobCardRepository({
@@ -89,9 +90,7 @@ class MockJobCardRepository implements JobCardRepository {
   }
 
   Future<String> _nextId(Box<Map<String, dynamic>> box) async {
-    final current = (box.get(_counterKey) as int?) ?? 0;
-    final next = current + 1;
-    await box.put(_counterKey, next);
+    final next = await nextCounterValue(box, _counterKey);
     return 'job-$next';
   }
 }
