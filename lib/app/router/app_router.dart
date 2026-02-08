@@ -118,7 +118,7 @@ class AppRouter {
 }
 
 class _RoutePlaceholder extends StatelessWidget {
-  const _RoutePlaceholder(this.title, {super.key});
+  const _RoutePlaceholder(this.title);
 
   final String title;
 
