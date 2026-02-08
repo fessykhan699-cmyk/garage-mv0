@@ -34,14 +34,17 @@ class SessionState {
 class SessionController extends StateNotifier<SessionState> {
   SessionController({
     GarageRepository? garageRepository,
+    Future<Box<Map<String, dynamic>>>? authBox,
   })  : _garageRepository = garageRepository ?? MockGarageRepository(),
+        _authBoxFuture = authBox ?? LocalStorage.authBox(),
         super(const SessionState(isAuthenticated: false));
 
   final GarageRepository _garageRepository;
+  final Future<Box<Map<String, dynamic>>> _authBoxFuture;
 
   /// Initialize session from local storage
   Future<void> initialize() async {
-    final box = await LocalStorage.authBox();
+    final box = await _authBoxFuture;
     final email = box.get('email') as String?;
     final garageId = box.get('garageId') as String?;
 
@@ -87,7 +90,7 @@ class SessionController extends StateNotifier<SessionState> {
     }
 
     // Save session to local storage
-    final box = await LocalStorage.authBox();
+    final box = await _authBoxFuture;
     await box.put('email', email);
     await box.put('garageId', garageId);
 
@@ -101,7 +104,7 @@ class SessionController extends StateNotifier<SessionState> {
 
   /// Logout and clear session
   Future<void> logout() async {
-    final box = await LocalStorage.authBox();
+    final box = await _authBoxFuture;
     await box.delete('email');
     await box.delete('garageId');
 
