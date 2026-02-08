@@ -67,6 +67,7 @@ flutter run
 ```bash
 git checkout main
 git pull
-git merge <branch-name>
-git push
+git merge --no-ff <branch-name>
+# Resolve conflicts if prompted, then commit the merge.
+git push origin main
 ```
