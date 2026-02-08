@@ -61,3 +61,13 @@ Plan gating is controlled by Firestore: `garages/{garageId}.plan = "free" | "pro
 ```bash
 flutter pub get
 flutter run
+```
+
+### Git Merge Workflow
+```bash
+git checkout main
+git pull
+git merge --no-ff <branch-name>
+# Resolve conflicts if prompted, then commit the merge.
+git push origin main
+```
