@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/session.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/dashboard/dashboard_screen.dart';
 
 /// Provider for the app router with authentication redirect
 final routerProvider = Provider<GoRouter>((ref) {
@@ -34,12 +36,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const _RoutePlaceholder('Login'),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: '/dashboard',
         name: 'dashboard',
-        builder: (context, state) => const _RoutePlaceholder('Dashboard'),
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/customers',
