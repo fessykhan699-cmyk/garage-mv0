@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'app/router/app_router.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kIsWeb) {
@@ -31,15 +33,7 @@ const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
 );
 
 final _routerProvider = Provider<GoRouter>(
-  (ref) => GoRouter(
-    initialLocation: '/',
-    routes: <GoRoute>[
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const _BootstrapHome(),
-      ),
-    ],
-  ),
+  (ref) => AppRouter.router,
 );
 
 class GarageApp extends ConsumerWidget {
@@ -54,20 +48,6 @@ class GarageApp extends ConsumerWidget {
         useMaterial3: true,
       ),
       routerConfig: ref.watch(_routerProvider),
-    );
-  }
-}
-
-class _BootstrapHome extends StatelessWidget {
-  const _BootstrapHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Garage MVP')),
-      body: const Center(
-        child: Text('Bootstrap is ready. Add features next.'),
-      ),
     );
   }
 }

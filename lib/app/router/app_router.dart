@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/login_screen.dart';
+import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/customers/customers_list_screen.dart';
+
 class AppRouter {
   AppRouter._();
 
@@ -10,17 +14,17 @@ class AppRouter {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const _RoutePlaceholder('Login'),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: '/dashboard',
         name: 'dashboard',
-        builder: (context, state) => const _RoutePlaceholder('Dashboard'),
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/customers',
         name: 'customers',
-        builder: (context, state) => const _RoutePlaceholder('Customers'),
+        builder: (context, state) => const CustomersListScreen(),
         routes: [
           GoRoute(
             path: 'add',
@@ -118,7 +122,7 @@ class AppRouter {
 }
 
 class _RoutePlaceholder extends StatelessWidget {
-  const _RoutePlaceholder(this.title, {super.key});
+  const _RoutePlaceholder(this.title);
 
   final String title;
 
