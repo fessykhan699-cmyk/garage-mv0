@@ -67,5 +67,5 @@ flutter run
 ```bash
 git checkout main
 git pull
-git merge branch-name
+git merge <branch-name>
 ```
