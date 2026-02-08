@@ -1,5 +1,7 @@
+import '../models/job_card.dart';
 import '../models/quotation.dart';
 import '../repositories/approval_repository.dart';
+import '../repositories/job_card_repository.dart';
 import '../repositories/quotation_repository.dart';
 
 /// Coordinates customer approval decisions with quotations.
@@ -10,11 +12,14 @@ class ApprovalController {
   ApprovalController({
     required ApprovalRepository approvalRepository,
     required QuotationRepository quotationRepository,
+    JobCardRepository? jobCardRepository,
   })  : _approvalRepository = approvalRepository,
-        _quotationRepository = quotationRepository;
+        _quotationRepository = quotationRepository,
+        _jobCardRepository = jobCardRepository;
 
   final ApprovalRepository _approvalRepository;
   final QuotationRepository _quotationRepository;
+  final JobCardRepository? _jobCardRepository;
 
   /// Fetch a token once.
   Future<ApprovalToken?> fetchToken(String tokenId) {
@@ -111,6 +116,10 @@ class ApprovalController {
       await _quotationRepository.update(updatedQuotation);
     }
 
+    if (_jobCardRepository != null && updatedQuotation != null) {
+      await _updateJobCardStatus(updatedQuotation.jobCardId, status);
+    }
+
     return ApprovalDecision(
       token: updatedToken,
       quotation: updatedQuotation,
@@ -136,6 +145,7 @@ class ApprovalController {
       vatEnabled: quotation.vatEnabled,
       vatRate: quotation.vatRate,
       subtotal: quotation.subtotal,
+      discountAmount: quotation.discountAmount,
       vatAmount: quotation.vatAmount,
       total: quotation.total,
       pdfPath: quotation.pdfPath,
@@ -172,6 +182,7 @@ class ApprovalController {
       vatEnabled: quotation.vatEnabled,
       vatRate: quotation.vatRate,
       subtotal: quotation.subtotal,
+      discountAmount: quotation.discountAmount,
       vatAmount: quotation.vatAmount,
       total: quotation.total,
       pdfPath: quotation.pdfPath,
@@ -183,6 +194,33 @@ class ApprovalController {
       createdAt: quotation.createdAt,
       updatedAt: now,
     );
+  }
+
+  Future<void> _updateJobCardStatus(
+    String jobCardId,
+    ApprovalStatus decision,
+  ) async {
+    final jobCard = await _jobCardRepository?.fetch(jobCardId);
+    if (jobCard == null) return;
+    final nextStatus = decision == ApprovalStatus.approved
+        ? JobCardStatus.approved
+        : JobCardStatus.draft;
+    if (jobCard.status == nextStatus) return;
+    final updated = JobCard(
+      id: jobCard.id,
+      garageId: jobCard.garageId,
+      customerId: jobCard.customerId,
+      vehicleId: jobCard.vehicleId,
+      jobCardNumber: jobCard.jobCardNumber,
+      complaint: jobCard.complaint,
+      notes: jobCard.notes,
+      beforePhotoPaths: jobCard.beforePhotoPaths,
+      afterPhotoPaths: jobCard.afterPhotoPaths,
+      status: nextStatus,
+      createdAt: jobCard.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    await _jobCardRepository?.update(updated);
   }
 }
 

@@ -15,6 +15,7 @@ class Invoice {
     required this.invoiceNumber,
     required this.status,
     required this.subtotal,
+    required this.discountAmount,
     required this.vatAmount,
     required this.total,
     required this.amountPaid,
@@ -33,6 +34,7 @@ class Invoice {
   final String invoiceNumber;
   final InvoiceStatus status;
   final num subtotal;
+  final num discountAmount;
   final num vatAmount;
   final num total;
   final num amountPaid;
@@ -52,6 +54,7 @@ class Invoice {
       'invoiceNumber': invoiceNumber,
       'status': _serializeStatus(status),
       'subtotal': subtotal,
+      'discountAmount': discountAmount,
       'vatAmount': vatAmount,
       'total': total,
       'amountPaid': amountPaid,
@@ -73,6 +76,7 @@ class Invoice {
       invoiceNumber: _requireString(map, 'invoiceNumber'),
       status: _parseStatus(_requireValue(map, 'status')),
       subtotal: _parseNum(_requireValue(map, 'subtotal')),
+      discountAmount: _parseNum(map['discountAmount'] ?? 0),
       vatAmount: _parseNum(map['vatAmount'] ?? 0),
       total: _parseNum(_requireValue(map, 'total')),
       amountPaid: _parseNum(map['amountPaid'] ?? 0),

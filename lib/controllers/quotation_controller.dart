@@ -21,6 +21,7 @@ class QuotationController {
     List<LineItem> laborItems = const [],
     List<LineItem> partItems = const [],
     bool vatEnabled = false,
+    num discountAmount = 0,
     num? vatRate,
     QuoteStatus status = QuoteStatus.draft,
     String? id,
@@ -51,6 +52,7 @@ class QuotationController {
           vatRate: vatRate,
         ),
         subtotal: 0,
+        discountAmount: discountAmount,
         vatAmount: 0,
         total: 0,
         pdfPath: pdfPath,
@@ -92,6 +94,7 @@ class QuotationController {
         vatEnabled: quotation.vatEnabled,
         vatRate: quotation.vatRate,
         subtotal: quotation.subtotal,
+        discountAmount: quotation.discountAmount,
         vatAmount: quotation.vatAmount,
         total: quotation.total,
         pdfPath: quotation.pdfPath,
@@ -115,12 +118,13 @@ class QuotationController {
   }) {
     final laborItems = List<LineItem>.unmodifiable(quotation.laborItems);
     final partItems = List<LineItem>.unmodifiable(quotation.partItems);
-    final totals = QuoteCalculator.calculateTotals(
-      laborItems: laborItems,
-      partItems: partItems,
-      vatEnabled: quotation.vatEnabled,
-      vatRate: quotation.vatRate,
-    );
+      final totals = QuoteCalculator.calculateTotals(
+        laborItems: laborItems,
+        partItems: partItems,
+        vatEnabled: quotation.vatEnabled,
+        vatRate: quotation.vatRate,
+        discountAmount: quotation.discountAmount,
+      );
     return Quotation(
       id: quotation.id,
       garageId: quotation.garageId,
@@ -137,6 +141,7 @@ class QuotationController {
         vatRate: quotation.vatRate,
       ),
       subtotal: totals.subtotal,
+      discountAmount: totals.discountAmount,
       vatAmount: totals.vatAmount,
       total: totals.total,
       pdfPath: quotation.pdfPath,

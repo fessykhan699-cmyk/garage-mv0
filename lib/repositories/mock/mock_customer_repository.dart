@@ -98,6 +98,9 @@ class MockCustomerRepository implements CustomerRepository {
     return Customer(
       id: nextId,
       garageId: customer.garageId,
+      name: customer.name,
+      phone: customer.phone,
+      notes: customer.notes,
       createdAt: customer.createdAt,
       updatedAt: customer.updatedAt,
     );

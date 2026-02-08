@@ -1,34 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class DashboardScreen extends StatelessWidget {
+import '../../app/providers/app_providers.dart';
+import '../../app/providers/controller_providers.dart';
+import '../../app/widgets/app_scaffold.dart';
+import '../../models/invoice.dart';
+import '../../models/job_card.dart';
+import '../../models/payment.dart';
+import '../../models/quotation.dart';
+
+final _jobCardsProvider = StreamProvider.autoDispose<List<JobCard>>((ref) {
+  final garageId = ref.watch(activeGarageIdProvider);
+  if (garageId == null) return Stream.empty();
+  return ref.watch(jobCardsControllerProvider).watchByGarage(garageId);
+});
+
+final _quotationsProvider = StreamProvider.autoDispose<List<Quotation>>((ref) {
+  final garageId = ref.watch(activeGarageIdProvider);
+  if (garageId == null) return Stream.empty();
+  return ref.watch(quotationControllerProvider).watchByGarage(garageId);
+});
+
+final _invoicesProvider = StreamProvider.autoDispose<List<Invoice>>((ref) {
+  final garageId = ref.watch(activeGarageIdProvider);
+  if (garageId == null) return Stream.empty();
+  return ref.watch(invoiceControllerProvider).watchByGarage(garageId);
+});
+
+final _paymentsProvider = StreamProvider.autoDispose<List<Payment>>((ref) {
+  final garageId = ref.watch(activeGarageIdProvider);
+  if (garageId == null) return Stream.empty();
+  return ref.watch(paymentsControllerProvider).watchByGarage(garageId);
+});
+
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
-
-  static const _metrics = [
-    _DashboardMetric(
-      title: 'Paid today',
-      value: 'PKR 0',
-      hint: 'Record payments to see today’s total.',
-      icon: Icons.payments_outlined,
-    ),
-    _DashboardMetric(
-      title: 'Pending approvals',
-      value: '0 quotes',
-      hint: 'Send approval links to customers.',
-      icon: Icons.pending_actions_outlined,
-    ),
-    _DashboardMetric(
-      title: 'Unpaid invoices',
-      value: '0 invoices',
-      hint: 'Track outstanding amounts here.',
-      icon: Icons.receipt_long_outlined,
-    ),
-    _DashboardMetric(
-      title: 'Open job cards',
-      value: '0 jobs',
-      hint: 'Create job cards to start work.',
-      icon: Icons.build_circle_outlined,
-    ),
-  ];
 
   static const double _horizontalPadding = 16;
   static const double _cardSpacing = 12;
@@ -36,11 +43,65 @@ class DashboardScreen extends StatelessWidget {
   static const double _mediumScreenBreakpoint = 600;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jobCards = ref.watch(_jobCardsProvider);
+    final quotations = ref.watch(_quotationsProvider);
+    final invoices = ref.watch(_invoicesProvider);
+    final payments = ref.watch(_paymentsProvider);
+
+    final pendingApprovals = quotations.maybeWhen(
+      data: (items) => items.where((q) => q.status == QuoteStatus.sent).toList(),
+      orElse: () => const <Quotation>[],
+    );
+    final unpaidInvoices = invoices.maybeWhen(
+      data: (items) => items
+          .where(
+            (invoice) =>
+                invoice.status == InvoiceStatus.unpaid ||
+                invoice.status == InvoiceStatus.partial,
+          )
+          .toList(),
+      orElse: () => const <Invoice>[],
+    );
+    final todayPaidTotal = payments.maybeWhen(
+      data: (items) => items
+          .where((payment) => _isSameDay(payment.paidAt, DateTime.now()))
+          .fold<num>(0, (sum, payment) => sum + payment.amount),
+      orElse: () => 0,
+    );
+
+    final metrics = [
+      _DashboardMetric(
+        title: 'Paid today',
+        value: _formatMoney(todayPaidTotal),
+        hint: 'Total payments received today.',
+        icon: Icons.payments_outlined,
       ),
+      _DashboardMetric(
+        title: 'Pending approvals',
+        value: '${pendingApprovals.length} quotes',
+        hint: 'Awaiting customer approval.',
+        icon: Icons.pending_actions_outlined,
+      ),
+      _DashboardMetric(
+        title: 'Unpaid invoices',
+        value: '${unpaidInvoices.length} invoices',
+        hint: 'Outstanding balance to collect.',
+        icon: Icons.receipt_long_outlined,
+      ),
+      _DashboardMetric(
+        title: 'Open job cards',
+        value: jobCards.maybeWhen(
+          data: (items) => '${items.length} jobs',
+          orElse: () => '—',
+        ),
+        hint: 'Work in progress.',
+        icon: Icons.build_circle_outlined,
+      ),
+    ];
+
+    return AppScaffold(
+      title: 'Dashboard',
       body: ListView(
         padding: const EdgeInsets.all(_horizontalPadding),
         children: [
@@ -52,7 +113,7 @@ class DashboardScreen extends StatelessWidget {
           Wrap(
             spacing: _cardSpacing,
             runSpacing: _cardSpacing,
-            children: _metrics
+            children: metrics
                 .map(
                   (metric) => _MetricCard(
                     metric: metric,
@@ -72,12 +133,12 @@ class DashboardScreen extends StatelessWidget {
             runSpacing: _cardSpacing,
             children: [
               FilledButton.icon(
-                onPressed: () => _showComingSoon(context),
+                onPressed: () => context.go('/jobcards/add'),
                 icon: const Icon(Icons.assignment_add_outlined),
                 label: const Text('New Job Card'),
               ),
               FilledButton.icon(
-                onPressed: () => _showComingSoon(context),
+                onPressed: () => context.go('/customers/add'),
                 icon: const Icon(Icons.person_add_alt_1_outlined),
                 label: const Text('New Customer'),
               ),
@@ -100,13 +161,10 @@ class DashboardScreen extends StatelessWidget {
     return paddedWidth;
   }
 
-  void _showComingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Coming soon. This action will be wired up next.'),
-      ),
-    );
-  }
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  String _formatMoney(num value) => 'PKR ${value.toStringAsFixed(0)}';
 }
 
 class _MetricCard extends StatelessWidget {
