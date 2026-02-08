@@ -23,6 +23,7 @@ class Quotation {
     required this.vatEnabled,
     required this.vatRate,
     required this.subtotal,
+    required this.discountAmount,
     required this.vatAmount,
     required this.total,
     this.pdfPath,
@@ -47,6 +48,7 @@ class Quotation {
   final bool vatEnabled;
   final num vatRate;
   final num subtotal;
+  final num discountAmount;
   final num vatAmount;
   final num total;
   final String? pdfPath;
@@ -72,6 +74,7 @@ class Quotation {
       'vatEnabled': vatEnabled,
       'vatRate': vatRate,
       'subtotal': subtotal,
+      'discountAmount': discountAmount,
       'vatAmount': vatAmount,
       'total': total,
       'pdf': _buildPdfMap(),
@@ -95,6 +98,7 @@ class Quotation {
       vatEnabled: _parseBool(map['vatEnabled'] ?? false),
       vatRate: _parseNum(map['vatRate'] ?? _defaultVatRate),
       subtotal: _parseNum(_requireValue(map, 'subtotal')),
+      discountAmount: _parseNum(map['discountAmount'] ?? 0),
       vatAmount: _parseNum(map['vatAmount'] ?? 0),
       total: _parseNum(_requireValue(map, 'total')),
       pdfPath: _parsePdfPath(map),

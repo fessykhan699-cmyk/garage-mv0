@@ -2,24 +2,45 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
+import 'app/providers/repository_providers.dart' as repo_providers;
+import 'app/router/app_router.dart';
+import 'controllers/auth_controller.dart' as auth_controller;
+import 'controllers/garage_controller.dart' as garage_controller;
+import 'services/local_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    assert(
-      _webFirebaseOptions.apiKey.isNotEmpty &&
-          _webFirebaseOptions.appId.isNotEmpty &&
-          _webFirebaseOptions.messagingSenderId.isNotEmpty &&
-          _webFirebaseOptions.projectId.isNotEmpty,
-      'Provide Firebase web configuration via --dart-define variables.',
-    );
-    await Firebase.initializeApp(options: _webFirebaseOptions);
-  } else {
-    await Firebase.initializeApp();
+  await LocalStorage.init();
+  const useFirebase = bool.fromEnvironment('USE_FIREBASE', defaultValue: false);
+  if (useFirebase) {
+    if (kIsWeb) {
+      assert(
+        _webFirebaseOptions.apiKey.isNotEmpty &&
+            _webFirebaseOptions.appId.isNotEmpty &&
+            _webFirebaseOptions.messagingSenderId.isNotEmpty &&
+            _webFirebaseOptions.projectId.isNotEmpty,
+        'Provide Firebase web configuration via --dart-define variables.',
+      );
+      await Firebase.initializeApp(options: _webFirebaseOptions);
+    } else {
+      await Firebase.initializeApp();
+    }
   }
 
-  runApp(const ProviderScope(child: GarageApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        auth_controller.authRepositoryProvider.overrideWith(
+          (ref) => ref.read(repo_providers.authRepositoryProvider),
+        ),
+        garage_controller.garageRepositoryProvider.overrideWith(
+          (ref) => ref.read(repo_providers.garageRepositoryProvider),
+        ),
+      ],
+      child: const GarageApp(),
+    ),
+  );
 }
 
 const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
@@ -28,18 +49,6 @@ const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
   messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
   projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
   storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
-);
-
-final _routerProvider = Provider<GoRouter>(
-  (ref) => GoRouter(
-    initialLocation: '/',
-    routes: <GoRoute>[
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const _BootstrapHome(),
-      ),
-    ],
-  ),
 );
 
 class GarageApp extends ConsumerWidget {
@@ -53,21 +62,7 @@ class GarageApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
         useMaterial3: true,
       ),
-      routerConfig: ref.watch(_routerProvider),
-    );
-  }
-}
-
-class _BootstrapHome extends StatelessWidget {
-  const _BootstrapHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Garage MVP')),
-      body: const Center(
-        child: Text('Bootstrap is ready. Add features next.'),
-      ),
+      routerConfig: AppRouter.router,
     );
   }
 }

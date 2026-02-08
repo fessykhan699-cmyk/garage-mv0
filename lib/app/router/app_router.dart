@@ -1,5 +1,21 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../features/approval/approval_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/customers/customer_detail_screen.dart';
+import '../../features/customers/customer_form_screen.dart';
+import '../../features/customers/customers_list_screen.dart';
+import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/invoices/invoice_detail_screen.dart';
+import '../../features/invoices/invoices_list_screen.dart';
+import '../../features/job_cards/job_card_detail_screen.dart';
+import '../../features/job_cards/job_card_form_screen.dart';
+import '../../features/job_cards/job_cards_list_screen.dart';
+import '../../features/payments/payment_form_screen.dart';
+import '../../features/quotations/quotation_builder_screen.dart';
+import '../../features/quotations/quotation_detail_screen.dart';
+import '../../features/settings/settings_screen.dart';
+import '../../features/vehicles/vehicle_form_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -10,56 +26,71 @@ class AppRouter {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const _RoutePlaceholder('Login'),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: '/dashboard',
         name: 'dashboard',
-        builder: (context, state) => const _RoutePlaceholder('Dashboard'),
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/customers',
         name: 'customers',
-        builder: (context, state) => const _RoutePlaceholder('Customers'),
+        builder: (context, state) => const CustomersListScreen(),
         routes: [
           GoRoute(
             path: 'add',
             name: 'customersAdd',
-            builder: (context, state) =>
-                const _RoutePlaceholder('Add Customer'),
+            builder: (context, state) => const CustomerFormScreen(),
+          ),
+          GoRoute(
+            path: ':id/edit',
+            name: 'customerEdit',
+            builder: (context, state) => CustomerFormScreen(
+              customerId: state.pathParameters['id'],
+            ),
           ),
           GoRoute(
             path: ':id',
             name: 'customerDetail',
-            builder: (context, state) => _RoutePlaceholder(
-              'Customer ${state.pathParameters['id'] ?? ''}',
+            builder: (context, state) => CustomerDetailScreen(
+              customerId: state.pathParameters['id'] ?? '',
             ),
+            routes: [
+              GoRoute(
+                path: 'vehicles/add',
+                name: 'vehiclesAdd',
+                builder: (context, state) => VehicleFormScreen(
+                  customerId: state.pathParameters['id'],
+                ),
+              ),
+              GoRoute(
+                path: 'vehicles/:vehicleId/edit',
+                name: 'vehiclesEdit',
+                builder: (context, state) => VehicleFormScreen(
+                  customerId: state.pathParameters['id'],
+                  vehicleId: state.pathParameters['vehicleId'],
+                ),
+              ),
+            ],
           ),
         ],
       ),
       GoRoute(
-        path: '/vehicles/add',
-        name: 'vehiclesAdd',
-        builder: (context, state) => _RoutePlaceholder(
-          'Add Vehicle for ${state.queryParameters['customerId'] ?? ''}',
-        ),
-      ),
-      GoRoute(
         path: '/jobcards',
         name: 'jobcards',
-        builder: (context, state) => const _RoutePlaceholder('Job Cards'),
+        builder: (context, state) => const JobCardsListScreen(),
         routes: [
           GoRoute(
             path: 'add',
             name: 'jobcardsAdd',
-            builder: (context, state) =>
-                const _RoutePlaceholder('Add Job Card'),
+            builder: (context, state) => const JobCardFormScreen(),
           ),
           GoRoute(
             path: ':id',
             name: 'jobcardDetail',
-            builder: (context, state) => _RoutePlaceholder(
-              'Job Card ${state.pathParameters['id'] ?? ''}',
+            builder: (context, state) => JobCardDetailScreen(
+              jobCardId: state.pathParameters['id'] ?? '',
             ),
           ),
         ],
@@ -67,22 +98,15 @@ class AppRouter {
       GoRoute(
         path: '/quotations/:id',
         name: 'quotationDetail',
-        builder: (context, state) => _RoutePlaceholder(
-          'Quotation ${state.pathParameters['id'] ?? ''}',
+        builder: (context, state) => QuotationDetailScreen(
+          quotationId: state.pathParameters['id'] ?? '',
         ),
         routes: [
           GoRoute(
             path: 'builder',
             name: 'quotationBuilder',
-            builder: (context, state) => _RoutePlaceholder(
-              'Quotation Builder ${state.pathParameters['id'] ?? ''}',
-            ),
-          ),
-          GoRoute(
-            path: 'preview',
-            name: 'quotationPreview',
-            builder: (context, state) => _RoutePlaceholder(
-              'Quotation Preview ${state.pathParameters['id'] ?? ''}',
+            builder: (context, state) => QuotationBuilderScreen(
+              quotationId: state.pathParameters['id'] ?? '',
             ),
           ),
         ],
@@ -90,43 +114,38 @@ class AppRouter {
       GoRoute(
         path: '/approve/:token',
         name: 'approve',
-        builder: (context, state) => _RoutePlaceholder(
-          'Approve ${state.pathParameters['token'] ?? ''}',
+        builder: (context, state) => ApprovalScreen(
+          tokenId: state.pathParameters['token'] ?? '',
         ),
       ),
       GoRoute(
-        path: '/invoices/:id',
-        name: 'invoiceDetail',
-        builder: (context, state) => _RoutePlaceholder(
-          'Invoice ${state.pathParameters['id'] ?? ''}',
-        ),
-      ),
-      GoRoute(
-        path: '/payments/add',
-        name: 'paymentsAdd',
-        builder: (context, state) => _RoutePlaceholder(
-          'Add Payment for ${state.queryParameters['invoiceId'] ?? ''}',
-        ),
+        path: '/invoices',
+        name: 'invoices',
+        builder: (context, state) => const InvoicesListScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            name: 'invoiceDetail',
+            builder: (context, state) => InvoiceDetailScreen(
+              invoiceId: state.pathParameters['id'] ?? '',
+            ),
+            routes: [
+              GoRoute(
+                path: 'payments/add',
+                name: 'paymentsAdd',
+                builder: (context, state) => PaymentFormScreen(
+                  invoiceId: state.pathParameters['id'] ?? '',
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       GoRoute(
         path: '/settings',
         name: 'settings',
-        builder: (context, state) => const _RoutePlaceholder('Settings'),
+        builder: (context, state) => const SettingsScreen(),
       ),
     ],
   );
-}
-
-class _RoutePlaceholder extends StatelessWidget {
-  const _RoutePlaceholder(this.title, {super.key});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text(title)),
-    );
-  }
 }

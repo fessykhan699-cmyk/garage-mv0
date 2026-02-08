@@ -3,7 +3,9 @@ class Garage {
     required this.id,
     this.name,
     this.phone,
+    this.email,
     this.address,
+    this.trn,
     this.logoUrl,
     String plan = _defaultPlan,
     this.planActivatedAt,
@@ -19,7 +21,9 @@ class Garage {
   final String id;
   final String? name;
   final String? phone;
+  final String? email;
   final String? address;
+  final String? trn;
   final String? logoUrl;
   final String plan;
   final DateTime? planActivatedAt;
@@ -31,7 +35,9 @@ class Garage {
   Garage copyWith({
     String? name,
     String? phone,
+    String? email,
     String? address,
+    String? trn,
     String? logoUrl,
     String? plan,
     DateTime? planActivatedAt,
@@ -44,7 +50,9 @@ class Garage {
       id: id,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      email: email ?? this.email,
       address: address ?? this.address,
+      trn: trn ?? this.trn,
       logoUrl: logoUrl ?? this.logoUrl,
       plan: plan ?? this.plan,
       planActivatedAt: planActivatedAt ?? this.planActivatedAt,
@@ -77,7 +85,9 @@ class Garage {
       'id': id,
       'name': name,
       'phone': phone,
+      'email': email,
       'address': address,
+      'trn': trn,
       'logoUrl': logoUrl,
       'plan': plan,
       'planActivatedAt': _serializeOptionalDateTime(
@@ -99,7 +109,9 @@ class Garage {
       id: _requireString(map, 'id'),
       name: map['name'] as String?,
       phone: map['phone'] as String?,
+      email: map['email'] as String?,
       address: map['address'] as String?,
+      trn: map['trn'] as String?,
       logoUrl: map['logoUrl'] as String?,
       plan: map['plan'] as String? ?? _defaultPlan,
       planActivatedAt: _parseDateTime(map['planActivatedAt']),

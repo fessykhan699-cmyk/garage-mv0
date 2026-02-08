@@ -98,6 +98,7 @@ class MockQuotationRepository implements QuotationRepository {
       partItems: quotation.partItems,
       vatEnabled: quotation.vatEnabled,
       vatRate: effectiveVatRate,
+      discountAmount: quotation.discountAmount,
     );
     return Quotation(
       id: quotation.id,
@@ -112,6 +113,7 @@ class MockQuotationRepository implements QuotationRepository {
       vatEnabled: quotation.vatEnabled,
       vatRate: effectiveVatRate,
       subtotal: totals.subtotal,
+      discountAmount: totals.discountAmount,
       vatAmount: totals.vatAmount,
       total: totals.total,
       pdfPath: quotation.pdfPath,
@@ -174,6 +176,7 @@ class MockQuotationRepository implements QuotationRepository {
       vatEnabled: quotation.vatEnabled,
       vatRate: quotation.vatRate,
       subtotal: quotation.subtotal,
+      discountAmount: quotation.discountAmount,
       vatAmount: quotation.vatAmount,
       total: quotation.total,
       pdfPath: quotation.pdfPath,

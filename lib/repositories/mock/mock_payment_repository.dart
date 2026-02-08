@@ -84,6 +84,7 @@ class MockPaymentRepository implements PaymentRepository {
       invoiceNumber: invoice.invoiceNumber,
       status: status,
       subtotal: invoice.subtotal,
+      discountAmount: invoice.discountAmount,
       vatAmount: invoice.vatAmount,
       total: invoice.total,
       amountPaid: newAmountPaid,

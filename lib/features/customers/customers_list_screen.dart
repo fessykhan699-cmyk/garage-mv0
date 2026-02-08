@@ -1,39 +1,36 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-class CustomersListScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../app/providers/app_providers.dart';
+import '../../app/providers/controller_providers.dart';
+import '../../app/widgets/app_scaffold.dart';
+import '../../models/customer.dart';
+
+final _customerSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+
+final _customersProvider = StreamProvider.autoDispose<List<Customer>>((ref) {
+  final garageId = ref.watch(activeGarageIdProvider);
+  if (garageId == null || garageId.isEmpty) return Stream.empty();
+  final query = ref.watch(_customerSearchProvider);
+  return ref.watch(customersControllerProvider).watchByGarage(
+        garageId,
+        query: query,
+      );
+});
+
+class CustomersListScreen extends ConsumerStatefulWidget {
   const CustomersListScreen({super.key});
 
   @override
-  State<CustomersListScreen> createState() => _CustomersListScreenState();
+  ConsumerState<CustomersListScreen> createState() => _CustomersListScreenState();
 }
 
-class _CustomersListScreenState extends State<CustomersListScreen> {
+class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
   final _searchController = TextEditingController();
-  String _query = '';
-
-  static const _phoneLabel = 'Phone: ';
-  static const _notesLabel = 'Notes: ';
-
-  static const _sampleCustomers = [
-    _CustomerListItem(
-      name: 'Ayesha Motors',
-      phone: '+92 300 1111111',
-      vehiclePlate: 'ABC-123',
-      notes: 'Loyal customer, prefers WhatsApp updates.',
-    ),
-    _CustomerListItem(
-      name: 'Kamran Khan',
-      phone: '+92 321 2222222',
-      vehiclePlate: 'LEA-9087',
-      notes: 'Pending approval for last quote.',
-    ),
-    _CustomerListItem(
-      name: 'Rida Autos',
-      phone: '+92 333 3333333',
-      vehiclePlate: 'BKZ-4501',
-      notes: 'Looking for quick turnaround.',
-    ),
-  ];
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -43,51 +40,28 @@ class _CustomersListScreenState extends State<CustomersListScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged() {
-    setState(() {
-      _query = _searchController.text.trim();
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      ref.read(_customerSearchProvider.notifier).state =
+          _searchController.text.trim();
     });
-  }
-
-  void _onAddCustomer() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Customer creation coming soon.'),
-      ),
-    );
-  }
-
-  void _onViewCustomer(_CustomerListItem customer) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Viewing ${customer.name} coming soon.'),
-      ),
-    );
-  }
-
-  List<_CustomerListItem> get _filteredCustomers {
-    if (_query.isEmpty) return _sampleCustomers;
-    final normalized = _query.toLowerCase();
-    return _sampleCustomers
-        .where((customer) => customer.matches(normalized))
-        .toList(growable: false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final customers = _filteredCustomers;
+    final customers = ref.watch(_customersProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Customers'),
-      ),
+    return AppScaffold(
+      title: 'Customers',
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _onAddCustomer,
+        onPressed: () => context.go('/customers/add'),
         icon: const Icon(Icons.person_add_alt_1_outlined),
         label: const Text('Add customer'),
       ),
@@ -100,40 +74,87 @@ class _CustomersListScreenState extends State<CustomersListScreen> {
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search),
                 labelText: 'Search customers',
-                hintText: 'Search by name, phone, or plate',
+                hintText: 'Search by name or phone',
                 border: OutlineInputBorder(),
               ),
             ),
           ),
           Expanded(
-            child: customers.isEmpty
-                ? const _EmptyState()
-                : ListView.separated(
-                    itemCount: customers.length,
-                    separatorBuilder: (_, __) => const Divider(height: 0),
-                    itemBuilder: (context, index) {
-                      final customer = customers[index];
-                      return ListTile(
-                        title: Text(customer.name),
-                        subtitle: Text(
-                          '$_phoneLabel${customer.phone}\n$_notesLabel${customer.notes}',
-                        ),
-                        isThreeLine: true,
-                        leading: const CircleAvatar(
-                          child: Icon(Icons.person_outline),
-                        ),
-                        trailing: Text(
-                          customer.vehiclePlate,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        onTap: () => _onViewCustomer(customer),
-                      );
-                    },
-                  ),
+            child: customers.when(
+              data: (items) => items.isEmpty
+                  ? const _EmptyState()
+                  : ListView.builder(
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final customer = items[index];
+                        return ListTile(
+                          leading: const CircleAvatar(
+                            child: Icon(Icons.person_outline),
+                          ),
+                          title: Text(customer.name.isEmpty
+                              ? 'Customer ${customer.id}'
+                              : customer.name),
+                          subtitle: Text(
+                            _customerSubtitle(customer),
+                          ),
+                          trailing: _CustomerActions(customerId: customer.id),
+                          onTap: () => context.go('/customers/${customer.id}'),
+                        );
+                      },
+                    ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => _ErrorState(error: error),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  String _customerSubtitle(Customer customer) {
+    final buffer = StringBuffer();
+    if (customer.phone.isNotEmpty) {
+      buffer.write('Phone: ${customer.phone}');
+    }
+    if ((customer.notes ?? '').isNotEmpty) {
+      if (buffer.isNotEmpty) buffer.write('\n');
+      buffer.write('Notes: ${customer.notes}');
+    }
+    return buffer.isEmpty ? 'No notes yet' : buffer.toString();
+  }
+}
+
+class _CustomerActions extends ConsumerWidget {
+  const _CustomerActions({required this.customerId});
+
+  final String customerId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'edit') {
+          context.go('/customers/$customerId/edit');
+        }
+        if (value == 'delete') {
+          _delete(context, ref);
+        }
+      },
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: 'edit', child: Text('Edit')),
+        PopupMenuItem(value: 'delete', child: Text('Delete')),
+      ],
+    );
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(customersControllerProvider);
+    await controller.delete(customerId);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Customer deleted')),
+      );
+    }
   }
 }
 
@@ -167,25 +188,21 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _CustomerListItem {
-  const _CustomerListItem({
-    required this.name,
-    required this.phone,
-    required this.vehiclePlate,
-    required this.notes,
-  });
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.error});
 
-  final String name;
-  final String phone;
-  final String vehiclePlate;
-  final String notes;
+  final Object error;
 
-  bool matches(String normalizedQuery) {
-    final lowerName = name.toLowerCase();
-    final lowerPhone = phone.toLowerCase();
-    final lowerPlate = vehiclePlate.toLowerCase();
-    return lowerName.contains(normalizedQuery) ||
-        lowerPhone.contains(normalizedQuery) ||
-        lowerPlate.contains(normalizedQuery);
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          'Failed to load customers: $error',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
   }
 }

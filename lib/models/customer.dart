@@ -2,12 +2,18 @@ class Customer {
   const Customer({
     required this.id,
     required this.garageId,
+    required this.name,
+    required this.phone,
+    this.notes,
     required this.createdAt,
     required this.updatedAt,
   });
 
   final String id;
   final String garageId;
+  final String name;
+  final String phone;
+  final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -15,6 +21,9 @@ class Customer {
     return {
       'id': id,
       'garageId': garageId,
+      'name': name,
+      'phone': phone,
+      'notes': notes,
       'createdAt': _serializeDateTime(createdAt, useIsoFormat),
       'updatedAt': _serializeDateTime(updatedAt, useIsoFormat),
     };
@@ -24,6 +33,9 @@ class Customer {
     return Customer(
       id: map['id'] as String,
       garageId: map['garageId'] as String,
+      name: map['name'] as String? ?? '',
+      phone: map['phone'] as String? ?? '',
+      notes: map['notes'] as String?,
       createdAt: _parseDateTime(map['createdAt']),
       updatedAt: _parseDateTime(map['updatedAt']),
     );
