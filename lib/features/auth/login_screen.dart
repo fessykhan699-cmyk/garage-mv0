@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../controllers/auth_controller.dart';
-import '../../repositories/auth_repository.dart';
+import '../../core/session.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -31,39 +31,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
 
-    FocusScope.of(context).unfocus();
-    await ref.read(authControllerProvider.notifier).signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
+    setState(() => _isLoading = true);
+
+    try {
+      FocusScope.of(context).unfocus();
+      await ref.read(sessionControllerProvider.notifier).login(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
+
+      if (mounted) {
+        context.go('/dashboard');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login error: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<AuthUser?>>(
-      authControllerProvider,
-      (previous, next) {
-        next.when(
-          data: (user) {
-            if (user != null && mounted) {
-              context.go('/dashboard');
-            }
-          },
-          loading: () {},
-          error: (error, stackTrace) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Login error: $error')),
-              );
-            }
-          },
-        );
-      },
-    );
-
-    final authState = ref.watch(authControllerProvider);
-    final isLoading = authState.isLoading;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
@@ -141,8 +135,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     FilledButton(
-                      onPressed: isLoading ? null : _submit,
-                      child: isLoading
+                      onPressed: _isLoading ? null : _submit,
+                      child: _isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,

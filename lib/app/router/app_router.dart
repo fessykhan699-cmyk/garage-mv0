@@ -1,21 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class AppRouter {
-  AppRouter._();
+import '../../core/session.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/dashboard/dashboard_screen.dart';
 
-  static final GoRouter router = GoRouter(
+/// Provider for the app router with authentication redirect
+final routerProvider = Provider<GoRouter>((ref) {
+  final isAuthenticated = ref.watch(isAuthenticatedProvider);
+  
+  return GoRouter(
     initialLocation: '/login',
+    redirect: (context, state) {
+      final path = state.uri.path;
+      
+      // Public routes that don't require authentication
+      if (path.startsWith('/approve/')) {
+        return null;
+      }
+      
+      // If not authenticated and not on login, redirect to login
+      if (!isAuthenticated && path != '/login') {
+        return '/login';
+      }
+      
+      // If authenticated and on login, redirect to dashboard
+      if (isAuthenticated && path == '/login') {
+        return '/dashboard';
+      }
+      
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const _RoutePlaceholder('Login'),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: '/dashboard',
         name: 'dashboard',
-        builder: (context, state) => const _RoutePlaceholder('Dashboard'),
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/customers',
@@ -28,36 +54,40 @@ class AppRouter {
             builder: (context, state) =>
                 const _RoutePlaceholder('Add Customer'),
           ),
+        ],
+      ),
+      GoRoute(
+        path: '/vehicles',
+        name: 'vehicles',
+        builder: (context, state) {
+          final customerId = state.uri.queryParameters['customerId'] ?? '';
+          return _RoutePlaceholder('Vehicles for $customerId');
+        },
+        routes: [
           GoRoute(
-            path: ':id',
-            name: 'customerDetail',
-            builder: (context, state) => _RoutePlaceholder(
-              'Customer ${state.pathParameters['id'] ?? ''}',
-            ),
+            path: 'add',
+            name: 'vehiclesAdd',
+            builder: (context, state) {
+              final customerId = state.uri.queryParameters['customerId'] ?? '';
+              return _RoutePlaceholder('Add Vehicle for $customerId');
+            },
           ),
         ],
       ),
       GoRoute(
-        path: '/vehicles/add',
-        name: 'vehiclesAdd',
-        builder: (context, state) => _RoutePlaceholder(
-          'Add Vehicle for ${state.queryParameters['customerId'] ?? ''}',
-        ),
-      ),
-      GoRoute(
-        path: '/jobcards',
-        name: 'jobcards',
+        path: '/jobCards',
+        name: 'jobCards',
         builder: (context, state) => const _RoutePlaceholder('Job Cards'),
         routes: [
           GoRoute(
-            path: 'add',
-            name: 'jobcardsAdd',
+            path: 'create',
+            name: 'jobCardsCreate',
             builder: (context, state) =>
-                const _RoutePlaceholder('Add Job Card'),
+                const _RoutePlaceholder('Create Job Card'),
           ),
           GoRoute(
             path: ':id',
-            name: 'jobcardDetail',
+            name: 'jobCardDetail',
             builder: (context, state) => _RoutePlaceholder(
               'Job Card ${state.pathParameters['id'] ?? ''}',
             ),
@@ -65,47 +95,33 @@ class AppRouter {
         ],
       ),
       GoRoute(
-        path: '/quotations/:id',
+        path: '/quotation/create',
+        name: 'quotationCreate',
+        builder: (context, state) {
+          final jobCardId = state.uri.queryParameters['jobCardId'] ?? '';
+          return _RoutePlaceholder('Create Quotation for $jobCardId');
+        },
+      ),
+      GoRoute(
+        path: '/quotation/:id',
         name: 'quotationDetail',
         builder: (context, state) => _RoutePlaceholder(
           'Quotation ${state.pathParameters['id'] ?? ''}',
         ),
-        routes: [
-          GoRoute(
-            path: 'builder',
-            name: 'quotationBuilder',
-            builder: (context, state) => _RoutePlaceholder(
-              'Quotation Builder ${state.pathParameters['id'] ?? ''}',
-            ),
-          ),
-          GoRoute(
-            path: 'preview',
-            name: 'quotationPreview',
-            builder: (context, state) => _RoutePlaceholder(
-              'Quotation Preview ${state.pathParameters['id'] ?? ''}',
-            ),
-          ),
-        ],
       ),
       GoRoute(
-        path: '/approve/:token',
-        name: 'approve',
-        builder: (context, state) => _RoutePlaceholder(
-          'Approve ${state.pathParameters['token'] ?? ''}',
-        ),
+        path: '/invoice/create',
+        name: 'invoiceCreate',
+        builder: (context, state) {
+          final quotationId = state.uri.queryParameters['quotationId'] ?? '';
+          return _RoutePlaceholder('Create Invoice for $quotationId');
+        },
       ),
       GoRoute(
-        path: '/invoices/:id',
+        path: '/invoice/:id',
         name: 'invoiceDetail',
         builder: (context, state) => _RoutePlaceholder(
           'Invoice ${state.pathParameters['id'] ?? ''}',
-        ),
-      ),
-      GoRoute(
-        path: '/payments/add',
-        name: 'paymentsAdd',
-        builder: (context, state) => _RoutePlaceholder(
-          'Add Payment for ${state.queryParameters['invoiceId'] ?? ''}',
         ),
       ),
       GoRoute(
@@ -113,9 +129,17 @@ class AppRouter {
         name: 'settings',
         builder: (context, state) => const _RoutePlaceholder('Settings'),
       ),
+      // Public approval route (no auth required)
+      GoRoute(
+        path: '/approve/:token',
+        name: 'approve',
+        builder: (context, state) => _RoutePlaceholder(
+          'Approve ${state.pathParameters['token'] ?? ''}',
+        ),
+      ),
     ],
   );
-}
+});
 
 class _RoutePlaceholder extends StatelessWidget {
   const _RoutePlaceholder(this.title, {super.key});

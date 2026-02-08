@@ -2,10 +2,18 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
+import 'app/router/app_router.dart';
+import 'core/session.dart';
+import 'services/local_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize local storage (Hive)
+  await LocalStorage.init();
+  
+  // Initialize Firebase
   if (kIsWeb) {
     assert(
       _webFirebaseOptions.apiKey.isNotEmpty &&
@@ -30,44 +38,34 @@ const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
   storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
 );
 
-final _routerProvider = Provider<GoRouter>(
-  (ref) => GoRouter(
-    initialLocation: '/',
-    routes: <GoRoute>[
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const _BootstrapHome(),
-      ),
-    ],
-  ),
-);
-
-class GarageApp extends ConsumerWidget {
+class GarageApp extends ConsumerStatefulWidget {
   const GarageApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GarageApp> createState() => _GarageAppState();
+}
+
+class _GarageAppState extends ConsumerState<GarageApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize session from storage
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(sessionControllerProvider.notifier).initialize();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router = ref.watch(routerProvider);
+    
     return MaterialApp.router(
       title: 'Garage MVP',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
         useMaterial3: true,
       ),
-      routerConfig: ref.watch(_routerProvider),
-    );
-  }
-}
-
-class _BootstrapHome extends StatelessWidget {
-  const _BootstrapHome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Garage MVP')),
-      body: const Center(
-        child: Text('Bootstrap is ready. Add features next.'),
-      ),
+      routerConfig: router,
     );
   }
 }

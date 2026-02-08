@@ -47,12 +47,16 @@ class MockPaymentRepository implements PaymentRepository {
   @override
   Future<List<Payment>> listByGarage(String garageId) async {
     final box = await _box;
-    return box.values
+    final items = box.values
         .whereType<Map>()
         .map((value) => Map<String, dynamic>.from(value))
         .where((map) => map['garageId'] == garageId)
         .map(Payment.fromMap)
-        .toList(growable: false);
+        .toList();
+    
+    // Sort by paidAt descending (newest first)
+    items.sort((a, b) => b.paidAt.compareTo(a.paidAt));
+    return items;
   }
 
   @override

@@ -45,12 +45,16 @@ class MockCustomerRepository implements CustomerRepository {
   @override
   Future<List<Customer>> listByGarage(String garageId) async {
     final box = await _box;
-    return box.values
+    final items = box.values
         .whereType<Map>()
         .map((value) => Map<String, dynamic>.from(value))
         .where((map) => map['garageId'] == garageId)
         .map(Customer.fromMap)
-        .toList(growable: false);
+        .toList();
+    
+    // Sort by createdAt descending (newest first)
+    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return items;
   }
 
   @override
