@@ -1,11 +1,23 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+// Firebase import kept for future use
+// import 'package:firebase_core/firebase_core.dart';
+
+// Import local storage
+import 'core/local_storage.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Hive local storage (Firebase disabled for now)
+  await LocalStorage.init();
+  
+  // Firebase initialization disabled for local-first development
+  // Will be enabled later when ready to integrate with Firebase
+  /*
   if (kIsWeb) {
     assert(
       _webFirebaseOptions.apiKey.isNotEmpty &&
@@ -18,10 +30,13 @@ Future<void> main() async {
   } else {
     await Firebase.initializeApp();
   }
+  */
 
   runApp(const ProviderScope(child: GarageApp()));
 }
 
+// Firebase options kept for future use
+/*
 const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
   apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
   appId: String.fromEnvironment('FIREBASE_APP_ID'),
@@ -29,6 +44,7 @@ const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
   projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
   storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
 );
+*/
 
 final _routerProvider = Provider<GoRouter>(
   (ref) => GoRouter(
