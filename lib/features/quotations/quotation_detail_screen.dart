@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers/app_providers.dart';
 import '../../app/providers/controller_providers.dart';
 import '../../app/widgets/app_scaffold.dart';
+import '../../core/app_constants.dart';
 import '../../models/customer.dart';
 import '../../models/invoice.dart';
 import '../../models/job_card.dart';
@@ -268,7 +269,7 @@ class QuotationDetailScreen extends ConsumerWidget {
           );
       tokenId = token.id;
     }
-    final approvalLink = 'https://garage-mvp.local/approve/$tokenId';
+    final approvalLink = buildApprovalLink(tokenId);
     final message = ShareUtils.quotationMessage(
       customerName: customer.name.isEmpty ? 'Customer' : customer.name,
       vehiclePlate: vehicle?.plateNumber ?? 'Vehicle',
@@ -365,7 +366,7 @@ class QuotationDetailScreen extends ConsumerWidget {
   }
 
   void _copyLink(BuildContext context, String tokenId) {
-    final link = 'https://garage-mvp.local/approve/$tokenId';
+    final link = buildApprovalLink(tokenId);
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Approval link copied.')),
@@ -514,7 +515,7 @@ class _ApprovalLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final link = 'https://garage-mvp.local/approve/$tokenId';
+    final link = buildApprovalLink(tokenId);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),

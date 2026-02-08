@@ -31,6 +31,7 @@ class CustomersListScreen extends ConsumerStatefulWidget {
 class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
+  static const _debounceDuration = Duration(milliseconds: 350);
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _CustomersListScreenState extends ConsumerState<CustomersListScreen> {
 
   void _onSearchChanged() {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 350), () {
+    _debounce = Timer(_debounceDuration, () {
       ref.read(_customerSearchProvider.notifier).state =
           _searchController.text.trim();
     });
