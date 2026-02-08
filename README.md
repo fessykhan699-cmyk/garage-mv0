@@ -68,4 +68,5 @@ flutter run
 git checkout main
 git pull
 git merge <branch-name>
+git push
 ```
