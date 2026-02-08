@@ -12,12 +12,28 @@ Cash-first garage app for creating professional quotations + customer approval l
 - WhatsApp share templates
 - Dashboard (today paid, pending approvals, unpaid invoices)
 
-Out of scope: inventory, chat, appointments, notifications, offline mode, multi-branch roles.
+Out of scope: inventory, chat, appointments, notifications, multi-branch roles.
 
 ## Tech Stack
 - Flutter (Android + iOS)
 - Firebase: Auth, Firestore, Storage (Functions optional)
+- Hive: Local storage for offline-first development
 - No FlutterFlow
+
+## Development Mode
+The app currently runs in **local-first mode** using Hive for data persistence. This allows full offline development and testing without Firebase setup.
+
+### Local Mode (Current)
+- Uses Hive for all data storage
+- No Firebase connection required
+- Data persists locally on device
+- Perfect for development and testing
+
+### Firebase Mode (Future)
+- Will use Firebase Auth, Firestore, and Storage
+- Repository interfaces are already defined
+- Easy switch from Local to Firebase implementations
+- Plan to implement Firebase repositories later
 
 ## Monetization (Cash-first)
 Free plan:
@@ -45,9 +61,19 @@ Plan gating is controlled by Firestore: `garages/{garageId}.plan = "free" | "pro
 ### Prereqs
 - Flutter SDK installed
 - Android Studio (for Android) and/or Xcode (for iOS)
-- Firebase account
 
-### Firebase Setup
+### Local Development (No Firebase Required)
+The app is currently configured for local-first development using Hive:
+
+```bash
+flutter pub get
+flutter run
+```
+
+No Firebase setup needed! The app will work completely offline.
+
+### Firebase Setup (Optional for Future)
+When ready to integrate Firebase:
 1. Create Firebase project
 2. Enable Authentication → Email/Password
 3. Create Firestore database
